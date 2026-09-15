@@ -63,21 +63,19 @@
 
   /* ---------- HERO ---------- */
   .hero{
-    display:grid; grid-template-columns:1fr;
-    align-items:center;
+    display:grid; grid-template-columns:1fr 0.9fr;
+    align-items:center; gap:56px;
     padding:88px 0 96px;
-    text-align:center;
   }
-  .hero-text{ max-width:640px; margin:0 auto; }
   .hero-text .eyebrow{
     font-size:0.85rem; color:var(--wine); margin-bottom:18px; display:block;
   }
   .hero-text h1{
-    font-size:clamp(2.6rem, 5vw, 4.1rem);
+    font-size:clamp(2.4rem, 4.4vw, 3.6rem);
     line-height:1.05;
   }
   .hero-text p{
-    margin:26px auto 0; max-width:42ch; color:var(--mocha); font-size:1.05rem;
+    margin-top:26px; max-width:42ch; color:var(--mocha); font-size:1.05rem;
   }
   .hero-cta{
     margin-top:38px; display:inline-flex; align-items:center; gap:14px;
@@ -86,6 +84,22 @@
     border:none; font-family:'Sora', sans-serif;
   }
   .hero-cta:hover{background:var(--wine-deep);}
+  .hero-visual-wrap{ max-width:380px; margin:0 auto; }
+  .hero-visual{
+    position:relative; aspect-ratio:3/4; border-radius:4px; overflow:hidden;
+    box-shadow:0 24px 48px rgba(33,30,27,0.18);
+  }
+  .hero-visual .carousel-track{ display:flex; height:100%; width:100%; transition:transform .6s ease; }
+  .hero-visual .carousel-track img{ flex:0 0 100%; width:100%; height:100%; object-fit:cover; }
+  .hero-tag{
+    position:absolute; top:16px; left:16px; z-index:2;
+    background:var(--paper); color:var(--wine); font-size:0.72rem; letter-spacing:0.05em;
+    text-transform:uppercase; padding:6px 14px; border-radius:2px;
+  }
+  .hero-caption{
+    margin-top:18px; text-align:center; color:var(--mocha);
+    font-family:'Fraunces', serif; font-style:italic; font-size:0.98rem; line-height:1.5;
+  }
 
   /* ---------- STORY / HISTORIA ---------- */
   .story{ padding:30px 0 100px; border-top:1px solid var(--line); }
@@ -333,7 +347,8 @@
   .whatsapp-btn svg{width:30px; height:30px;}
 
   @media (max-width: 860px){
-    .hero{padding:56px 0 60px;}
+    .hero{grid-template-columns:1fr; padding:56px 0 60px; gap:32px; text-align:center;}
+    .hero-visual-wrap{order:-1;}
     .nav-links{display:none;}
     .grid{grid-template-columns:repeat(2, 1fr); gap:18px 14px;}
     .footer-grid{grid-template-columns:1fr; gap:28px;}
@@ -386,6 +401,10 @@
     <h1>Prendas con carácter, pensadas para el día a día.</h1>
     <p>Piezas atemporales en telas naturales, diseñadas en Medellín para mujeres que buscan sencillez con presencia.</p>
     <button class="hero-cta" onclick="document.getElementById('catalogo').scrollIntoView()">Ver colección</button>
+  </div>
+  <div class="hero-visual-wrap">
+    <div class="hero-visual" id="heroVisual"></div>
+    <p class="hero-caption" id="heroCaption"></p>
   </div>
 </section>
 
@@ -1004,6 +1023,30 @@
 
   renderGrid();
   renderCart();
+
+  function initHero(){
+    const heroProduct = products.find(p => p.id === 14);
+    const heroVisual = document.getElementById('heroVisual');
+    const heroCaption = document.getElementById('heroCaption');
+    if(!heroProduct || !heroVisual) return;
+    const imgs = heroProduct.images || (heroProduct.image ? [heroProduct.image] : []);
+    if(imgs.length === 0) return;
+    heroVisual.innerHTML = `
+      <span class="hero-tag">Nueva colección</span>
+      <div class="carousel-track" data-idx="0">${imgs.map(src => `<img src="${src}" alt="${heroProduct.name}">`).join("")}</div>
+    `;
+    if(heroCaption) heroCaption.textContent = heroProduct.description || "";
+    const track = heroVisual.querySelector('.carousel-track');
+    const slideCount = imgs.length;
+    if(slideCount > 1){
+      let idx = 0;
+      setInterval(() => {
+        idx = (idx + 1) % slideCount;
+        track.style.transform = `translateX(-${idx * 100}%)`;
+      }, 3000);
+    }
+  }
+  initHero();
 </script>
 
 
