@@ -159,6 +159,9 @@
   .product-img{
     aspect-ratio:3/4; position:relative; overflow:hidden;
   }
+  .product-img > img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
   .carousel-track{
     display:flex; height:100%; width:100%;
     transition:transform .4s ease;
@@ -724,7 +727,6 @@
   let cart = [];
   let activeCat = "todos";
   let searchTerm = "";
-  let carouselTimers = [];
 
   const grid = document.getElementById('productGrid');
   const resultCount = document.getElementById('resultCount');
@@ -733,8 +735,6 @@
   const fmt = n => "$" + n.toLocaleString('es-CO');
 
   function renderGrid(){
-    carouselTimers.forEach(t => clearInterval(t));
-    carouselTimers = [];
     let list = activeCat === "todos" ? products : products.filter(p => p.cat === activeCat);
     if(searchTerm.trim() !== ""){
       const q = normalize(searchTerm.trim());
@@ -751,12 +751,7 @@
       <div class="product" data-id="${p.id}">
         <div class="product-img" style="${imgs ? `` : `background:${p.gradient}`}">
           ${p.tag ? `<span class="tag">${p.tag}</span>` : ""}
-          ${imgs ? `<div class="carousel-track" data-idx="0">${imgs.map(src => `<img src="${src}" alt="${p.name}">`).join("")}</div>` : ""}
-          ${imgs && imgs.length > 1 ? `
-            <button class="carousel-arrow prev">‹</button>
-            <button class="carousel-arrow next">›</button>
-            <div class="gallery-dots">${imgs.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" data-idx="${i}"></span>`).join("")}</div>
-          ` : ""}
+          ${imgs ? `<img src="${imgs[0]}" alt="${p.name}">` : ""}
         </div>
         <div class="product-body">
           <div class="cat">${p.cat}</div>
@@ -778,36 +773,6 @@
           btn.classList.add('active');
         });
       });
-    });
-
-    grid.querySelectorAll('.product-img').forEach(imgBox => {
-      const track = imgBox.querySelector('.carousel-track');
-      if (!track) return;
-      const slideCount = track.children.length;
-      const dots = imgBox.querySelectorAll('.gallery-dots .dot');
-
-      function goTo(idx){
-        idx = (idx + slideCount) % slideCount;
-        track.dataset.idx = idx;
-        track.style.transform = `translateX(-${idx * 100}%)`;
-        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-      }
-
-      const prevBtn = imgBox.querySelector('.carousel-arrow.prev');
-      const nextBtn = imgBox.querySelector('.carousel-arrow.next');
-      if (prevBtn) prevBtn.addEventListener('click', () => goTo(parseInt(track.dataset.idx) - 1));
-      if (nextBtn) nextBtn.addEventListener('click', () => goTo(parseInt(track.dataset.idx) + 1));
-      dots.forEach(dot => dot.addEventListener('click', () => goTo(parseInt(dot.dataset.idx))));
-
-      if (slideCount > 1) {
-        let timer = setInterval(() => goTo(parseInt(track.dataset.idx) + 1), 3000);
-        carouselTimers.push(timer);
-        imgBox.addEventListener('mouseenter', () => clearInterval(timer));
-        imgBox.addEventListener('mouseleave', () => {
-          timer = setInterval(() => goTo(parseInt(track.dataset.idx) + 1), 3000);
-          carouselTimers.push(timer);
-        });
-      }
     });
 
     grid.querySelectorAll('.add-btn').forEach(btn => {
