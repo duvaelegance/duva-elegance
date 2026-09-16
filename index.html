@@ -762,10 +762,14 @@
   
   ];
 
-  let cart = [];
+  let cart = JSON.parse(localStorage.getItem('duva_cart') || '[]');
   let activeCat = "todos";
   let searchTerm = "";
   let favorites = JSON.parse(localStorage.getItem('duva_favorites') || '[]');
+
+  function saveCart(){
+    localStorage.setItem('duva_cart', JSON.stringify(cart));
+  }
 
   function saveFavorites(){
     localStorage.setItem('duva_favorites', JSON.stringify(favorites));
@@ -894,6 +898,7 @@
   const checkoutBtn = document.getElementById('checkoutBtn');
 
   function renderCart(){
+    saveCart();
     const totalQty = cart.reduce((s,l) => s + l.qty, 0);
     cartCountEl.textContent = totalQty;
 
@@ -1009,6 +1014,7 @@
     checkoutBtn.disabled = true;
     subtotalEl.textContent = fmt(0);
     cart = [];
+    saveCart();
     cartCountEl.textContent = 0;
   });
 
