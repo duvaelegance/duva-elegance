@@ -61,6 +61,28 @@
   }
   .cart-btn:hover{background:var(--ink); color:var(--paper);}
 
+  /* ---------- MOBILE ACTIONS BAR ---------- */
+  .mobile-actions-bar{ display:none; }
+  .mob-btn{
+    background:var(--ink); color:var(--paper); border:none; border-radius:4px;
+    padding:11px 16px; font-size:0.82rem; display:inline-flex; align-items:center; gap:7px;
+    font-family:'Sora', sans-serif; cursor:pointer; white-space:nowrap;
+  }
+  .mob-btn svg{ width:15px; height:15px; }
+  .fav-count{
+    background:var(--wine); color:#fff; font-size:0.68rem;
+    border-radius:50%; width:17px; height:17px;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .fav-toggle{
+    position:absolute; top:12px; right:12px; z-index:3;
+    width:30px; height:30px; border-radius:50%; border:none;
+    background:rgba(255,255,255,0.85); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .fav-toggle svg{ width:16px; height:16px; stroke:var(--ink); fill:none; transition:.2s ease; }
+  .fav-toggle.active svg{ fill:var(--wine); stroke:var(--wine); }
+
   /* ---------- HERO ---------- */
   .hero{
     display:flex; flex-direction:column; align-items:center;
@@ -353,6 +375,7 @@
   @media (max-width: 860px){
     .hero{padding:48px 0 60px;}
     .nav-links{display:none;}
+    .mobile-actions-bar{ display:flex; gap:10px; padding-top:14px; }
     .grid{grid-template-columns:repeat(2, 1fr); gap:18px 14px;}
     .footer-grid{grid-template-columns:1fr; gap:28px;}
   }
@@ -397,6 +420,14 @@
     </button>
   </div>
 </header>
+
+<div class="mobile-actions-bar wrap">
+  <button class="mob-btn" onclick="document.getElementById('contacto').scrollIntoView()">Contactos</button>
+  <button class="mob-btn" id="openFav">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.7-4.35-9.33-8.2C1.1 10.5 1.5 7 4.4 5.5 6.6 4.4 9 5 12 8c3-3 5.4-3.6 7.6-2.5 2.9 1.5 3.3 5 1.73 7.3C18.7 16.65 12 21 12 21z"/></svg>
+    Favoritos <span class="fav-count" id="favCount">0</span>
+  </button>
+</div>
 
 <section class="hero wrap">
   <div class="hero-text">
@@ -681,6 +712,14 @@
   </div>
 </aside>
 
+<aside class="drawer" id="favDrawer">
+  <div class="drawer-head">
+    <h3>Tus favoritos</h3>
+    <button class="close-btn" id="closeFav">×</button>
+  </div>
+  <div class="drawer-items" id="favItems"><div class="empty-cart">Aún no tienes favoritos.<br>Toca el corazón en cualquier prenda para guardarla aquí.</div></div>
+</aside>
+
 <div class="modal-overlay" id="productModalOverlay">
   <div class="product-modal">
     <button class="modal-close" id="modalClose">&times;</button>
@@ -726,6 +765,19 @@
   let cart = [];
   let activeCat = "todos";
   let searchTerm = "";
+  let favorites = JSON.parse(localStorage.getItem('duva_favorites') || '[]');
+
+  function saveFavorites(){
+    localStorage.setItem('duva_favorites', JSON.stringify(favorites));
+    const favCountEl = document.getElementById('favCount');
+    if(favCountEl) favCountEl.textContent = favorites.length;
+  }
+
+  function toggleFavorite(id){
+    const idx = favorites.indexOf(id);
+    if(idx >= 0) favorites.splice(idx, 1); else favorites.push(id);
+    saveFavorites();
+  }
 
   const grid = document.getElementById('productGrid');
   const resultCount = document.getElementById('resultCount');
@@ -750,6 +802,9 @@
       <div class="product" data-id="${p.id}">
         <div class="product-img" style="${imgs ? `` : `background:${p.gradient}`}">
           ${p.tag ? `<span class="tag">${p.tag}</span>` : ""}
+          <button class="fav-toggle ${favorites.includes(p.id) ? 'active' : ''}" data-fav-id="${p.id}" aria-label="Favorito">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.7-4.35-9.33-8.2C1.1 10.5 1.5 7 4.4 5.5 6.6 4.4 9 5 12 8c3-3 5.4-3.6 7.6-2.5 2.9 1.5 3.3 5 1.73 7.3C18.7 16.65 12 21 12 21z"/></svg>
+          </button>
           ${imgs ? `<img src="${imgs[0]}" alt="${p.name}">` : ""}
         </div>
         <div class="product-body">
@@ -764,6 +819,15 @@
       </div>
     `;
     }).join("");
+
+    grid.querySelectorAll('.fav-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFavorite(parseInt(btn.dataset.favId));
+        btn.classList.toggle('active');
+        if(favDrawer.classList.contains('open')) renderFavorites();
+      });
+    });
 
     grid.querySelectorAll('.size-row').forEach(row => {
       row.querySelectorAll('.size-opt').forEach(btn => {
@@ -872,9 +936,59 @@
     drawer.classList.add('open'); overlay.classList.add('open');
   });
   document.getElementById('closeCart').addEventListener('click', closeDrawer);
-  overlay.addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', () => { closeDrawer(); closeFavDrawer(); });
   function closeDrawer(){
     drawer.classList.remove('open'); overlay.classList.remove('open');
+  }
+
+  const favDrawer = document.getElementById('favDrawer');
+  const favItems = document.getElementById('favItems');
+  document.getElementById('openFav').addEventListener('click', () => {
+    renderFavorites();
+    favDrawer.classList.add('open'); overlay.classList.add('open');
+  });
+  document.getElementById('closeFav').addEventListener('click', closeFavDrawer);
+  function closeFavDrawer(){
+    favDrawer.classList.remove('open'); overlay.classList.remove('open');
+  }
+
+  function renderFavorites(){
+    const favProducts = products.filter(p => favorites.includes(p.id));
+    if(favProducts.length === 0){
+      favItems.innerHTML = `<div class="empty-cart">Aún no tienes favoritos.<br>Toca el corazón en cualquier prenda para guardarla aquí.</div>`;
+      return;
+    }
+    favItems.innerHTML = favProducts.map(p => {
+      const thumb = p.images ? p.images[0] : (p.image || null);
+      return `
+      <div class="cart-line">
+        <div class="swatch" style="${thumb ? `background-image:url('${thumb}'); background-size:cover; background-position:center;` : `background:${p.gradient}`}"></div>
+        <div class="cart-line-info">
+          <h4>${p.name}</h4>
+          <div class="cat">${p.cat} · ${fmt(p.price)}</div>
+          <div class="qty-row">
+            <button class="qty-btn fav-add" data-id="${p.id}" style="width:auto; padding:0 12px;">Añadir al carrito</button>
+            <button class="remove-line fav-remove" data-id="${p.id}">Quitar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    }).join("");
+
+    favItems.querySelectorAll('.fav-add').forEach(btn => {
+      btn.addEventListener('click', () => {
+        addToCart(parseInt(btn.dataset.id), null);
+        btn.textContent = "Añadido ✓";
+        setTimeout(() => { btn.textContent = "Añadir al carrito"; }, 1100);
+      });
+    });
+    favItems.querySelectorAll('.fav-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        toggleFavorite(parseInt(btn.dataset.id));
+        renderFavorites();
+        renderGrid();
+      });
+    });
   }
 
   checkoutBtn.addEventListener('click', () => {
@@ -964,7 +1078,7 @@
   }
 
   grid.addEventListener('click', (e) => {
-    if(e.target.closest('.add-btn') || e.target.closest('.size-opt') || e.target.closest('.carousel-arrow') || e.target.closest('.dot')) return;
+    if(e.target.closest('.add-btn') || e.target.closest('.size-opt') || e.target.closest('.carousel-arrow') || e.target.closest('.dot') || e.target.closest('.fav-toggle')) return;
     const card = e.target.closest('.product');
     if(!card) return;
     openProductModal(parseInt(card.dataset.id));
@@ -983,6 +1097,7 @@
     setTimeout(() => { modalAddBtn.textContent = "Añadir al carrito"; }, 1100);
   });
 
+  saveFavorites();
   renderGrid();
   renderCart();
 
