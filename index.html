@@ -1025,7 +1025,7 @@
       return `• ${l.name}${talla} x${l.qty} — ${fmt(l.price * l.qty)}`;
     }).join('\n');
     const totalPedido = cart.reduce((s,l) => s + l.price * l.qty, 0);
-    const mensaje = `¡Hola! Quiero hacer este pedido en DUVA Elegance:\n\n${lineas}\n\nTotal: ${fmt(totalPedido)}\n\nMi nombre:\nCedula:\nTeléfono:\nDirección de envío:\nMedio de pago (Transferencia / contraentrega):`;
+    const mensaje = `¡Hola! Quiero hacer este pedido en DUVA Elegance:\n\n${lineas}\n\nTotal: ${fmt(totalPedido)}\n\nMi nombre:\nCedula:\nTeléfono:\nDirección de envío:\nMedio de pago (Transferencia / pago en casa):`;
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
     drawerItems.innerHTML = `<div class="empty-cart">
